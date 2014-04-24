@@ -1,0 +1,4 @@
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
+importFrom(RcppGSL, fastLm, fastLmPure)
+useDynLib(gibbsLda)

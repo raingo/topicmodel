@@ -1,6 +1,7 @@
-setwd('/home/raingo/workplace/BST512/project')
+setwd('/home/raingo/workplace/BST512/project/code')
 require(Rcpp)
 require(RcppGSL)
+library('gibbsLda', lib.loc='.')
 
 doc.pairs <- as.matrix(read.table('ap-pairs.dat'))
 colnames(doc.pairs) <- c('doc', 'word', 'cnt')

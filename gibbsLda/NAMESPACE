@@ -1,3 +1,4 @@
-exportPattern("^[[:alpha:]]+")
-importFrom(Rcpp, evalCpp)
 useDynLib(gibbsLda)
+import(RcppArmadillo)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")

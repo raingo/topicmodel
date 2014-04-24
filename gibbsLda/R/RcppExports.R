@@ -9,11 +9,23 @@ table_2d_fast <- function(lhs, rhs, n_lhs, n_rhs) {
     .Call('gibbsLda_table_2d_fast', PACKAGE = 'gibbsLda', lhs, rhs, n_lhs, n_rhs)
 }
 
-gibbs_lda_c <- function(docs, Ndk, Nwk, Nk, Z, K, niter = 20L, beta = .05, alpha = .01) {
-    .Call('gibbsLda_gibbs_lda_c', PACKAGE = 'gibbsLda', docs, Ndk, Nwk, Nk, Z, K, niter, beta, alpha)
+gibbs_lda_c <- function(docs, Ndk, Nwk, Nk, Z, doc_list, word_list, K, niter = 20L, beta = .05, alpha = .01) {
+    .Call('gibbsLda_gibbs_lda_c', PACKAGE = 'gibbsLda', docs, Ndk, Nwk, Nk, Z, doc_list, word_list, K, niter, beta, alpha)
 }
 
-rcpp_hello_world <- function() {
-    .Call('gibbsLda_rcpp_hello_world', PACKAGE = 'gibbsLda')
+rcpparma_hello_world <- function() {
+    .Call('gibbsLda_rcpparma_hello_world', PACKAGE = 'gibbsLda')
+}
+
+rcpparma_outerproduct <- function(x) {
+    .Call('gibbsLda_rcpparma_outerproduct', PACKAGE = 'gibbsLda', x)
+}
+
+rcpparma_innerproduct <- function(x) {
+    .Call('gibbsLda_rcpparma_innerproduct', PACKAGE = 'gibbsLda', x)
+}
+
+rcpparma_bothproducts <- function(x) {
+    .Call('gibbsLda_rcpparma_bothproducts', PACKAGE = 'gibbsLda', x)
 }
 

@@ -1,7 +1,7 @@
-setwd('/home/raingo/workplace/BST512/project/code')
+#setwd('/home/raingo/workplace/BST512/project/code')
 #setwd('/u/yli/workplace/bst512/')
-library('gibbsLda')
 library(doParallel)
+library('gibbsLda')
 
 doc.pairs <- as.matrix(read.table('ap-pairs.dat'))
 colnames(doc.pairs) <- c('doc', 'word', 'cnt')
@@ -65,7 +65,13 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100)
   return(perp_res)
 }
 
+worker.init <- function()
+{
+  library('gibbsLda')
+}
+
 cl <- makePSOCKcluster(2)
+clusterCall(cl, worker.init)
 registerDoParallel(cl)
 
 # n.rep <- 10
@@ -82,12 +88,12 @@ n.save <- 1000
 perp.res.all <- foreach(
   ratio = params.grid[, 1],
   K = params.grid[, 2],
-  rep = params.grid[, 3]) %do% {
+  rep = params.grid[, 3]) %dopar% {
 
 
     cat(ratio, K, rep, '\n')
     train.dev <- data.split(doc.pairs, ratio)
-    gibbs.lda(train.dev, n.save, K)
+    gibbs.lda(train.dev, K, n.save)
   }
 
 save(perp.res.all, file = 'results-2.rdb')

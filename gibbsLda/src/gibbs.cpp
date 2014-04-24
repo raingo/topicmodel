@@ -5,26 +5,22 @@
 
 #include <Rcpp.h>
 #include <algorithm>
-//#include <gsl/gsl_rng.h>
-//#include <gsl/gsl_randist.h>
 
 #include <cstdlib>
 
-using namespace Rcpp;  // just to be explicit
+using namespace Rcpp;
 
 double randMToN(double M, double N)
 {
     return M + (rand() / ( RAND_MAX / (N-M) ) ) ;
 }
 
-//size_t discrete_sample(gsl_rng *r, double * P, size_t K)
 size_t discrete_sample(double * P, size_t K)
 {
     size_t i = 0;
     for (i = 1; i < K; i++) {
         P[i] += P[i - 1];
     }
-    //double alpha = gsl_ran_flat(r, 0.0, P[K - 1]);
     double alpha = randMToN(0.0, P[K - 1]);
     double *target = std::upper_bound(P, P + K, alpha);
     return (size_t)(target - P);
@@ -59,7 +55,6 @@ IntegerVector gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix N
     size_t n_pairs = docs.nrow();
     size_t i, j, k;
     double *P;
-    //gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
 
     size_t n_words = Nwk.nrow();
 
@@ -97,8 +92,6 @@ IntegerVector gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix N
 
     PutRNGstate();
 
-    //gsl_rng_free(r);
     delete [] P;
     return Z;
 }
-// [[Rcpp::depends(RcppGSL)]]

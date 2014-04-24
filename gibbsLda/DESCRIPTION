@@ -10,3 +10,4 @@ License: What Licence is it under ?
 Depends: Rcpp (>= 0.11.1), RcppGSL (>= 0.2.0)
 Imports: Rcpp (>= 0.11.1)
 LinkingTo: RcppGSL, Rcpp
+Packaged: 2014-04-24 15:12:59 UTC; raingo

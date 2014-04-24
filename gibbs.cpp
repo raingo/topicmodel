@@ -37,7 +37,7 @@ IntegerVector table_1d_fast(IntegerVector input, int n)
 IntegerMatrix table_2d_fast(IntegerVector lhs, IntegerVector rhs, int n_lhs, int n_rhs)
 {
     IntegerMatrix res(n_lhs, n_rhs);
-    int n_pairs = lhs.size(), i;
+    int n_pairs = lhs.size();
     for (int i = 0; i < n_pairs; i++) {
         ++res(lhs(i), rhs(i));
     }
@@ -45,7 +45,7 @@ IntegerMatrix table_2d_fast(IntegerVector lhs, IntegerVector rhs, int n_lhs, int
 }
 
 // [[Rcpp::export]]
-IntegerVector gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, size_t K, int niter = 20, double beta = .05, double alpha = .01)
+IntegerVector gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, size_t K, size_t niter = 20, double beta = .05, double alpha = .01)
 {
     size_t n_pairs = docs.nrow();
     size_t i, j, k;
@@ -61,7 +61,6 @@ IntegerVector gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix N
 
             size_t doc_id = docs(j, 0);
             size_t word_id = docs(j, 1);
-            size_t cnt = docs(j, 2);
             size_t topic = Z(j);
 
             --Ndk(doc_id, topic);

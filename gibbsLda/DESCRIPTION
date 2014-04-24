@@ -7,7 +7,7 @@ Author: Who wrote it
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
 License: What Licence is it under ?
-Depends: Rcpp (>= 0.11.1), RcppGSL (>= 0.2.0)
+Depends: Rcpp (>= 0.11.1)
 Imports: Rcpp (>= 0.11.1)
-LinkingTo: RcppGSL, Rcpp
+LinkingTo: Rcpp
 Packaged: 2014-04-24 15:12:59 UTC; raingo

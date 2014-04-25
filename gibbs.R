@@ -12,23 +12,23 @@ vocab <- read.table('vocab.txt')
 data.split <- function(triple.let, train.ratio = .8)
 {
   train.dev <- runif(nrow(triple.let)) < train.ratio
-  
+
   n.words <- max(triple.let[, 2]) + 1L
   n.docs <- max(triple.let[, 1]) + 1L
-  
+
   word.trace.n <- 5L
   word.trace.list <- as.integer(sample.int(n.words, size = word.trace.n, replace = F)) - 1L
-  
+
   doc.trace.n <- 5L
   doc.trace.list <- as.integer(sample.int(n.docs, size = doc.trace.n, replace = F)) - 1L
-  
+
   train <- triple.let[train.dev, ]
   dev <- triple.let[!train.dev, ]
-  
-  res <- list('train' = train, 
-              'dev' = dev, 
-              'n.words' = n.words, 
-              'n.docs' = n.docs, 
+
+  res <- list('train' = train,
+              'dev' = dev,
+              'n.words' = n.words,
+              'n.docs' = n.docs,
               'train.ratio' = train.ratio,
               'word.trace.n' = word.trace.n,
               'word.trace.list' = word.trace.list,
@@ -49,35 +49,35 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0)
   else{
     seed0 <- 12345
     set.seed(seed0)
-    
+
     Z <- as.integer(sample.int(n.topics, size = nrow(train.dev$train), replace = T)) - 1L
-    
+
     Ndk <- table_2d_fast(train.dev$train[, 'doc'], Z, train.dev$n.docs, n.topics)
     Nwk <- table_2d_fast(train.dev$train[, 'word'], Z, train.dev$n.words, n.topics)
     Nk <- table_1d_fast(Z, n.topics)
     Ndw <- table_1d_fast(train.dev$train[, 'doc'], train.dev$n.docs)
-    
+
     alpha <- .01
     beta <- .05
-    
+
     perplexity <- function()
     {
       theta_dk <- apply(Ndk + alpha, 2, '/', Ndw + n.topics * alpha)
       phi_kw <- apply(Nwk + beta, 1, '/', Nk + train.dev$n.words * beta)
-      
+
       p_wk <- theta_dk[train.dev$dev[,'doc'] + 1, ] *
         t(phi_kw[, train.dev$dev[,'word'] + 1])
-      
+
       p_w <- apply(p_wk, 1, FUN = sum)
-      
+
       log_pw <- log(p_w)
-      
+
       res <- exp(-sum(log_pw)/nrow(train.dev$dev))
       return(res)
     }
-    
+
     Z0 <- Z
-    
+
     niter <- 20 # thin factor
     perp.res <- c()
     doc.trace <- c()
@@ -86,19 +86,19 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0)
     for (i in 1:n.save)
     {
       gibbs.res <- gibbs_lda_c(train.dev$train,
-                               Ndk, Nwk, Nk, Z, 
-                               train.dev$doc.trace.list, train.dev$word.trace.list, 
+                               Ndk, Nwk, Nk, Z,
+                               train.dev$doc.trace.list, train.dev$word.trace.list,
                                n.topics, niter, beta, alpha)
-      
+
       doc.trace <- abind(doc.trace, gibbs.res$doc.trace, along = 3)
       word.trace <- abind(word.trace, gibbs.res$word.trace, along = 3)
       nk.trace <- cbind(nk.trace, gibbs.res$nk.trace)
       perp.res <- cbind(perp.res, perplexity())
     }
-    save(perp.res, 
-         word.trace, 
-         doc.trace, 
-         train.dev, 
+    save(perp.res,
+         word.trace,
+         doc.trace, nk.trace,
+         train.dev,
          Z0, Z, seed0, niter, n.topics, n.save, repi,
          file = save.fn)
   }
@@ -108,7 +108,7 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0)
 # n.save <- 100
 # K <- 20
 # repi <- 1
-# 
+#
 # train.dev <- data.split(doc.pairs, .2)
 # sourceCpp('gibbsLda/src/gibbs.cpp')
 # res <- gibbs.lda(train.dev, K, n.save, repi)
@@ -132,14 +132,14 @@ registerDoParallel(cl)
 perp.res.all <- foreach(
   ratio = params.grid[, 1],
   K = params.grid[, 2],
-  repi = params.grid[, 3], 
+  repi = params.grid[, 3],
   .packages = c('abind', 'gibbsLda')) %dopar% {
-    
+
     sink("log.txt", append=TRUE)
-    
+
     cat(ratio, K, repi, paste(Sys.time()), '\n')
     train.dev <- data.split(doc.pairs, ratio)
-    
+
     tryCatch(
       res <- gibbs.lda(train.dev, K, n.save, repi),
       error = function(e) {

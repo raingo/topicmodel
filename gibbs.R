@@ -3,11 +3,23 @@
 
 library(abind)
 
+gibbs.lda.save.fn <- function(n.topics, n.save, repi, train.ratio, data.name)
+{
+  save.fn <- paste(base.dir, 
+                   'perp.res-', 
+                   data.name,'-', 
+                   n.topics, '-', 
+                   n.save, '-', 
+                   repi, '-', 
+                   train.ratio, '.rdb', sep='')
+  return(save.fn)
+}
+
 source('load.data.R')
 
 gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0, data.name = 'general')
 {
-    save.fn <- paste(base.dir, 'perp.res-', data.name,'-', n.topics, '-', n.save, '-', repi, '-', train.dev$train.ratio, '.rdb', sep='')
+    save.fn <- gibbs.lda.save.fn(n.topics, n.save, repi, train.dev$train.ratio, data.name)
     if(file.exists(save.fn) && F)
     {
         cat('loading existing data')

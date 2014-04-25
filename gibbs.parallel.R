@@ -1,17 +1,20 @@
 library(doParallel)
 source('gibbs.R')
-gibbs.parallel <- function(dataset)
+
+sampling.params.grid <- function()
 {
-  n.rep <- 10
-  K.set <- seq(from = 10, to = 100, by = 1)
-  ratio.set <- seq(from = .1, to = .9, by = .1)
-  
   n.rep <- 5
   K.set <- c(10, 20, 30, 40, 50)
   ratio.set <- c(.2, .3, .5, .8)
+  params.grid <- expand.grid(ratio.set, K.set, 1:n.rep)
+  colnames(params.grid) <- c('ratio', 'K', 'rep')
+  return(params.grid)
+}
+gibbs.parallel <- function(dataset)
+{
   n.save <- 1000
   
-  params.grid <- expand.grid(ratio.set, K.set, 1:n.rep)
+  params.grid <- sampling.params.grid()
   
   log.fn <- paste("log-", dataset$digest, ".txt")
   writeLines(c(""), log.fn)
@@ -20,9 +23,9 @@ gibbs.parallel <- function(dataset)
   registerDoParallel(cl)
   
   perp.res.all <- foreach(
-    ratio = params.grid[, 1],
-    K = params.grid[, 2],
-    repi = params.grid[, 3], 
+    ratio = params.grid[, 'ratio'],
+    K = params.grid[, 'K'],
+    repi = params.grid[, 'rep'], 
     .packages = c('abind', 'gibbsLda')) %dopar% {
       
       sink(log.fn, append=TRUE)
@@ -31,7 +34,7 @@ gibbs.parallel <- function(dataset)
       train.dev <- data.split(dataset, ratio)
       
       tryCatch(
-        res <- gibbs.lda(train.dev, K, n.save, repi),
+        res <- gibbs.lda(train.dev, K, n.save, repi, dataset$digest),
         error = function(e) {
           res <<- paste('error', e)
         },

@@ -2,6 +2,8 @@ library(doParallel)
 source('load.data.R')
 source('gibbs.parallel.R')
 
+n.save <- 100
+
 rep <- 5
 
 numTopics <- 50
@@ -19,7 +21,7 @@ for (repi.d in 1:rep)
                            averageDocumentLength,
                            averageWordsPerTopic, repi.d)
 
-  gibbs.parallel(dataset)
+  gibbs.parallel(dataset, n.save)
 }
 
 rep <- 5
@@ -39,7 +41,7 @@ for (repi.d in 1:rep)
                            averageDocumentLength,
                            averageWordsPerTopic, repi.d)
 
-  gibbs.parallel(dataset)
+  gibbs.parallel(dataset, n.save)
 }
 
 #stop('enough')

@@ -1,29 +1,33 @@
 library(doParallel)
 source('gibbs.R')
 source('load.data.R')
-gibbs.parallel <- function(dataset)
-{
-  n.rep <- 10
-  K.set <- seq(from = 10, to = 100, by = 1)
-  ratio.set <- seq(from = .1, to = .9, by = .1)
 
+sampling.params.grid <- function()
+{
   n.rep <- 5
   K.set <- c(10, 20, 30, 40, 50)
   ratio.set <- c(.2, .3, .5, .8)
+  params.grid <- expand.grid(ratio.set, K.set, 1:n.rep)
+  colnames(params.grid) <- c('ratio', 'K', 'rep')
+  return(params.grid)
+}
+gibbs.parallel <- function(dataset)
+{
   n.save <- 1000
 
-  params.grid <- expand.grid(ratio.set, K.set, 1:n.rep)
-
   log.fn <- paste("logs/log-", dataset$digest, ".txt", sep = "")
+
+  params.grid <- sampling.params.grid()
+
   writeLines(c(""), log.fn)
 
   cl <- makePSOCKcluster(n.core)
   registerDoParallel(cl)
 
   perp.res.all <- foreach(
-    ratio = params.grid[, 1],
-    K = params.grid[, 2],
-    repi = params.grid[, 3],
+    ratio = params.grid[, 'ratio'],
+    K = params.grid[, 'K'],
+    repi = params.grid[, 'rep'],
     .packages = c('abind', 'gibbsLda')) %dopar% {
       source('load.data.R')
       source('gibbs.R')
@@ -34,7 +38,7 @@ gibbs.parallel <- function(dataset)
       train.dev <- data.split(dataset, ratio)
 
       tryCatch(
-        res <- gibbs.lda(train.dev, K, n.save, repi),
+        res <- gibbs.lda(train.dev, K, n.save, repi, dataset$digest),
         error = function(e) {
             cat('error: ', e, '\n')
           res <<- paste('error', e)

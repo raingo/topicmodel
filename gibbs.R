@@ -8,7 +8,7 @@ source('load.data.R')
 gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0, data.name = 'general')
 {
     save.fn <- paste(base.dir, 'perp.res-', data.name,'-', n.topics, '-', n.save, '-', repi, '-', train.dev$train.ratio, '.rdb', sep='')
-    if(file.exists(save.fn) && F)
+    if(file.exists(save.fn))
     {
         cat('loading existing data')
         load(save.fn)
@@ -101,10 +101,10 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0, data.name = '
                                 along = 3
                                 )
             nk.trace <- cbind(nk.trace, gibbs.res$nk.trace)
-            perp.res <- cbind(perp.res, perplexity())
+            perp.res <- c(perp.res, perplexity())
 
             if (eval.bias)
-                bias.res <- cbind(bias.res, pseudo.bias())
+                bias.res <- c(bias.res, pseudo.bias())
         }
         save(perp.res,
              word.trace,

@@ -1,6 +1,6 @@
 library(doParallel)
 source('load.data.R')
-source('gibbs.R')
+source('gibbs.parallel.R')
 
 rep <- 5
 
@@ -18,7 +18,7 @@ for (repi.d in 1:rep)
                            numDocs,
                            averageDocumentLength,
                            averageWordsPerTopic, repi.d)
-  
+
   gibbs.parallel(dataset)
 }
 
@@ -38,7 +38,7 @@ for (repi.d in 1:rep)
                            numDocs,
                            averageDocumentLength,
                            averageWordsPerTopic, repi.d)
-  
+
   gibbs.parallel(dataset)
 }
 
@@ -48,7 +48,7 @@ for (repi.d in 1:rep)
 # n.save <- 100
 # K <- 5
 # repi <- 1
-# 
+#
 # train.dev <- data.split(dataset, .8)
 # sourceCpp('gibbsLda/src/gibbs.cpp')
 # res <- gibbs.lda(train.dev, K, n.save, repi, dataset$digest)

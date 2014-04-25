@@ -1,4 +1,5 @@
 library(MCMCpack)
+source('load.data.R')
 
 # translate from C# code of
 # http://research.microsoft.com/en-us/um/cambridge/projects/infernet/docs/Latent%20Dirichlet%20Allocation.aspx
@@ -87,12 +88,11 @@ gen.dateset <- function(
   averageWordsPerTopic, repi
 )
 {
-  save.fn <- paste('/u/yli/yli-data/bst512/lda-',
-                   numTopics, '-',
-                   sizeVocab, '-',
-                   numDocs, '-',
-                   averageDocumentLength, '-',
-                   averageWordsPerTopic, '-', repi, '.rdb', sep='')
+  save.fn <- sim.data.save.fn(numTopics,
+                              sizeVocab,
+                              numDocs,
+                              averageDocumentLength,
+                              averageWordsPerTopic, repi)
 
   if (file.exists(save.fn))
   {

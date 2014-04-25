@@ -4,11 +4,12 @@
  */
 
 //#include <Rcpp.h>
-#include <Rmath.h>
-#include <RcppArmadillo.h>
-#include <algorithm>
-
 #include <cstdlib>
+#include <Rmath.h>
+#include <algorithm>
+#include <fstream>
+
+#include <RcppArmadillo.h>
 
 using namespace Rcpp;
 
@@ -28,8 +29,8 @@ IntegerVector table_1d_fast(IntegerVector input, int n)
 {
     IntegerVector res(n);
 
-    int n_pairs = input.size(), i;
-    for (i = 0; i < n_pairs; i++) {
+    int n_pairs = input.size();
+    for (int i = 0; i < n_pairs; i++) {
         ++res(input(i));
     }
     return res;
@@ -39,7 +40,7 @@ IntegerVector table_1d_fast(IntegerVector input, int n)
 IntegerMatrix table_2d_fast(IntegerVector lhs, IntegerVector rhs, int n_lhs, int n_rhs)
 {
     IntegerMatrix res(n_lhs, n_rhs);
-    int n_pairs = lhs.size(), i;
+    int n_pairs = lhs.size();
     for (int i = 0; i < n_pairs; i++) {
         ++res(lhs(i), rhs(i));
     }
@@ -57,15 +58,15 @@ arma::uvec gen_uvec(IntegerVector src)
 }
 
 // [[Rcpp::export]]
-List gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, IntegerVector doc_list, IntegerVector word_list, size_t K, int niter = 20, double beta = .05, double alpha = .01)
+List gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, IntegerVector doc_list, IntegerVector word_list, size_t K, size_t niter = 20, double beta = .05, double alpha = .01)
 {
     size_t n_pairs = docs.nrow();
-    size_t i, j, k, t;
+    size_t i, j, k;
     double *P;
 
     size_t n_words = Nwk.nrow();
 
-    Rprintf("IN the function now!\n");
+    //Rprintf("IN the function now!\n");
 
     arma::icube doc_trace(doc_list.size(), K, niter);
     arma::icube word_trace(word_list.size(), K, niter);
@@ -88,7 +89,7 @@ List gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, Integ
 
             size_t doc_id = docs(j, 0);
             size_t word_id = docs(j, 1);
-            size_t cnt = docs(j, 2);
+            //size_t cnt = docs(j, 2);
             size_t topic = m_Z(j);
 
             --m_Ndk(doc_id, topic);

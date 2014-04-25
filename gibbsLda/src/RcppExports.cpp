@@ -41,7 +41,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // gibbs_lda_c
-List gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, IntegerVector doc_list, IntegerVector word_list, size_t K, int niter = 20, double beta = .05, double alpha = .01);
+List gibbs_lda_c(IntegerMatrix docs, IntegerMatrix Ndk, IntegerMatrix Nwk, IntegerVector Nk, IntegerVector Z, IntegerVector doc_list, IntegerVector word_list, size_t K, size_t niter = 20, double beta = .05, double alpha = .01);
 RcppExport SEXP gibbsLda_gibbs_lda_c(SEXP docsSEXP, SEXP NdkSEXP, SEXP NwkSEXP, SEXP NkSEXP, SEXP ZSEXP, SEXP doc_listSEXP, SEXP word_listSEXP, SEXP KSEXP, SEXP niterSEXP, SEXP betaSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
@@ -55,7 +55,7 @@ BEGIN_RCPP
         Rcpp::traits::input_parameter< IntegerVector >::type doc_list(doc_listSEXP );
         Rcpp::traits::input_parameter< IntegerVector >::type word_list(word_listSEXP );
         Rcpp::traits::input_parameter< size_t >::type K(KSEXP );
-        Rcpp::traits::input_parameter< int >::type niter(niterSEXP );
+        Rcpp::traits::input_parameter< size_t >::type niter(niterSEXP );
         Rcpp::traits::input_parameter< double >::type beta(betaSEXP );
         Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP );
         List __result = gibbs_lda_c(docs, Ndk, Nwk, Nk, Z, doc_list, word_list, K, niter, beta, alpha);

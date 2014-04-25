@@ -13,14 +13,14 @@ data.split <- function(triple.let, train.ratio = .8)
 {
   train.dev <- runif(nrow(triple.let)) < train.ratio
   
-  n.words <- max(triple.let[, 2]) + 1
-  n.docs <- max(triple.let[, 1]) + 1
+  n.words <- max(triple.let[, 2]) + 1L
+  n.docs <- max(triple.let[, 1]) + 1L
   
-  word.trace.n <- 5
-  word.trace.list <- as.integer(sample.int(n.words, size = word.trace.n, replace = F)) - 1
+  word.trace.n <- 5L
+  word.trace.list <- as.integer(sample.int(n.words, size = word.trace.n, replace = F)) - 1L
   
-  doc.trace.n <- 5
-  doc.trace.list <- as.integer(sample.int(n.docs, size = doc.trace.n, replace = F)) - 1
+  doc.trace.n <- 5L
+  doc.trace.list <- as.integer(sample.int(n.docs, size = doc.trace.n, replace = F)) - 1L
   
   train <- triple.let[train.dev, ]
   dev <- triple.let[!train.dev, ]

@@ -1,0 +1,28 @@
+% Latent Dirichlet Allocation using Gibbs Sampling
+% Yuncheng Li
+  Computer Science, University of Rochester
+% Apr. 30, 2014
+
+# Agenda
+
+* Latent Dirichlet Allocation
+* Algorithm
+* Simulations
+
+# Datasets
+``` {r ap-data-trace}
+source('load.data.R')
+source('./gibbs.vis.stat.R')
+
+dataset <- load.ap.data()
+A <- gibbs.vis.stat(dataset)
+```
+
+
+# Examples
+
+# Perplexity
+
+# Traceplots
+
+# Instance Agreement Bias

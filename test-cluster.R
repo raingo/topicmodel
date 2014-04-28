@@ -1,4 +1,14 @@
 
+library(foreach)
+
+A <- cbind(1:20, 51:70)
+
+foreach(i = A[,1], j = A[,2]) %do% {
+  cat(i, j, '\n')
+}
+
+stop('enough')
+
 library(doSNOW)
 
 getnodes <- function(hosts) {

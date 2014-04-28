@@ -1,0 +1,10 @@
+new president last two made government time i officials told
+i people years like think dont just time get going
+police people killed government two army military reported security soldiers
+percent year million last billion rate sales increase new rose
+police two found shot man night yearold died i arrested
+court trial judge charges attorney case prison years convicted guilty
+bush dukakis campaign jackson republican democratic presidential president convention primary
+company million billion inc corp share stock co offer new
+party political elections government opposition minister election vote national parties
+bill senate house rep committee sen congress vote members legislation

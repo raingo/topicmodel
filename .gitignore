@@ -13,3 +13,5 @@ figure
 report.*
 !report.Rmd
 refer.*
+report-math.*
+!report-math.tex

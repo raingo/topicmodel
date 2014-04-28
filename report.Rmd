@@ -1,13 +1,229 @@
 % Latent Dirichlet Allocation using Gibbs Sampling
 % Yuncheng Li
   Computer Science, University of Rochester
-% Apr. 30, 2014
+% Apr. 30, 2014, BST512 Final Project
+
+``` {r setup, include = F}
+opts_chunk$set(cache = T, eval = F, echo = F, include = F)
+```
 
 # Agenda
 
 * Latent Dirichlet Allocation
 * Algorithm
 * Simulations
+* Notations
+* Parameters
+
+# Motivation --- An Example
+Example articles from [Associated Press](http://ap.org)
+
+* 2,246 news articles
+* 10,473 unique words
+* 342,533 tokens
+
+![Associated Press](ap.png)
+
+# Law/Legislation
+
+*  ... went **committee** leaders ... receipts **members** four ... sits **senate** appropriations ...
+*  ...   **house** thursday ... damage **bill** tally ... democrats **vote** followed ...
+*  ... state **senate** seat ... january **senate** two ... get **bill** passed ... vetoed **bill** made ...
+*  ... public **members** shared ... windfall **house** members ... house **members** accepted ...
+*  ... new **congress** discuss ... rights **bill** push ... early **bill** defeated ...
+*  ... brief **house** voted ... passed **house** earlier ... key **vote** senate ...
+*  ... campaign **members** family ... nine **members** contributed ... family **members** made ...
+*  ...   **house** tuesday ... rejected **legislation** protect ... men **house** defeated ...
+*  ... dan **bill** give ... lautenberg **bill** bradley ... contend **bill** door ...
+
+# Politics and Election
+
+*  ... communist **party** milan ... communist **party** premier
+*  ... polls **opposition** alliance ... municipal **elections** leading ... percent **vote** percent ...
+*  ... leader **opposition** labor ... tony **party** conference ... leftist **party** moderate ...
+*  ... man **national** front ... front **party** leader ... attended **political** meeting ...
+*  ... association **national** made ... majority **elections** refuses
+*  ... second **election** complete ... four **political** parties ... political **parties** opposing ...
+*  ... participate **election** runoff ... alberto **political** favored ... months **election** campaigning ...
+*  ... parliamentary **elections** held ... march **government** stopped ... voting **elections** held ...
+*  ... democratic **party** labor ... labor **minister** december ... prime **minister** noboru ...
+*  ... prime **minister** noboru ... accepted **political** donations ... named **political** supreme ...
+
+# Business
+
+*  ... acquired **million** shares ... singer **company** officials ... acquired **company** million ...
+*  ... ran **company** dismantled
+*  ... merger **offer** banca ... bank **new** york ... outstanding **offer** banca ...
+*  ... dividend **share** common ... common **stock** santa ... pacific **share** shares ...
+*  ... hostile **billion** tender ... tender **offer** food ... nabisco **share** best ...
+*  ... back **million** kraft ... possible **company** excited ... partner **new** kohlberg ...
+*  ... business **million** cash ... last **company** announced ... generated **company**   ...
+*  ... buy **stock** coastamerica ... coastamerica **share** american ... tender **offer** five ...
+*  ... macmillan **new** publishing ... services **company** offered ... acquire **billion** week ...
+*  ... holding **company** subsidiary ... premiums **million** last ... revenues **billion** personal ...
+
+# Police/Cases
+
+*  ... raided **police** believe ... tuesday **found** searched ... last **two** weeks ...
+*  ... fled **police** speeds ... state **police** boy ... satisfactory **police** names ...
+*  ... patrolman **two** children ... away **found** hour ... tuesday **two** ages ...
+*  ... looking **police** officer ... parked **two** weeks ... computer **found** notion ...
+*  ... story **two** accidentally ... playing **police** girl ... told **police** two ...
+*  ... nine **police** victims ... sunday **night** central ... taking **police** arrested ...
+*  ...   **man** stabbed ... family **police** michael ... slashed **arrested** investigation ...
+*  ... occurred **man** service ... handgun **shot** nelson ... assistance **man** police ...
+*  ... allegedly **two** rented ... wounded **police** unidentified ... unidentified **man** treated ...
+*  ... gunman **shot** two ... shot **two** people ... hostage **police** man ... police **man** shot ...
+
+# Military/Army
+
+*  ... four **people** leaving ... opened **police** regional ... march **killed** three ...
+*  ... three **government** southern ... back **military** convoy ... liberation **army** captured ...
+*  ...   **people** died ... five **police** hospital ... clashes **army** demonstrators ...
+*  ... dubbed **people** fired ... armed **army** capable ... funds **government** allegations ...
+*  ... british **military** barracks ... british **military** officials ... republican **army** blamed ...
+*  ...   **government** supporters ... tuesday **people** witnesses ... reports **two** big ...
+*  ... killing **people** injuring ... hundreds **people** died
+*  ... british **army** reinforcements ... terrorist **army** army ... army **army** headquarters ...
+*  ...   **police** clashed ... theater **security** source ... student **killed** four ...
+*  ... occupied **army** barracks ... border **killed** undisclosed ... responsibility **reported** civilians ...
+
+# What's LDA for?
+
+From Wikipedia, LDA, ..., allows sets of observations to be explained by **unobserved groups** that explain why some **parts** of the data are similar.
+
+* Group similar documents
+* Identify keywords
+
+# Other Applications
+
+* Bioinformatics, [Functional Generality](http://www.psrg.csail.mit.edu/pubs/plos-comp-bio-2007.pdf)
+* Linguistics
+* Political science
+
+...
+
+# Notations
+
+<img alt="Plate model for LDA", style="float: right" src="lda.png" />
+
+Follows [Integrating Out Multinomial Parameters in Latent Dirichlet Allocation and Naive Bayes for Collapsed Gibbs Sampling](http://lingpipe.files.wordpress.com/2010/07/lda3.pdf)
+
+| Variables                     | Meaning                                    | Descriptions                   |
+|-------------------------------|--------------------------------------------|--------------------------------|
+| $M \in \mathbb{N}_{+}$        | number of documents                        | 3,000                          |
+| $N_m \in \mathbb{N}_{+}$      | number of words in $m$-th document         | 100                            |
+| $J$                           | number of unique words                     | 20,000                         |
+| $K$                           | number of topics (predefined)              | 50                             |
+| $y_{m,n} \in 1:J$             | $n$-th word of the $m$-th document         | 300K vector                    |
+| $z_{m,n} \in 1:K$             | topic assigned to $y_{m,n}$                | 300K vector                    |
+| $\theta_m \in [0,1]^K$        | topic distribution for document $m$        | 3,000 $\times$ 50 matrix, 150K |
+| $\phi_k \in [0,1]^J$          | word distribution for topic $k$            | 20,000 $\times$ 50 matrix, 1M  |
+| $\alpha \in \mathbb{R}_{+}^K$ | Dirichlet prior for $\theta_m$             | 0.01                           |
+| $\beta \in \mathbb{R}_{+}^J$  | Dirichlet prior distributions for $\phi_k$ | 0.05                           |
+
+Topic is assigned to **individual words**, and document is a mixture of topics.
+
+# Generative Process
+
+<img alt="Plate model for LDA", style="float: right" src="lda.png" />
+
+1. Draw word distribution $\phi_k \sim \text{Dir}(\beta)$ for each topic $k$
+1. Draw topic distribution $\theta_m \sim \text{Dir}(\alpha)$ for each document $m$
+1. For each **SLOT** $n$ in document $m$, draw topic $z_{m,n} \sim \text{Multi}(\theta_m)$.
+1. For each **SLOT** $n$ in document $m$, draw word $y_{m,n} \sim \text{Multi}(\phi_{z_{m,n}})$
+
+Inference goal: given $y_{m,n}$, fit $\phi_k$, $\theta_m$ and $z_{m,n}$
+
+Some important counts,
+
+1. $c_{k,j}$ denotes, in any documents, how many times, word $j$ assigned to topic $k$
+1. $c_{k,m}$ denotes, in document $m$, how many words assigned to topic $k$
+1. $c_k$ denotes, throughout entire corpus, how many words assigned to topic $k$.
+$$
+c_k = \sum_j c_{k,j} = \sum_m c_{k,m}
+$$
+
+Once we have a draw of the vector $z_{m,n}$, we can compute these counts efficiently.
+
+# Posteriors
+
+<img alt="Plate model for LDA", style="float: right" src="lda.png" />
+
+* Joint posterior distribution,
+
+$$
+p(\phi, \theta, z | y, \alpha, \beta) \propto p(\phi|\beta) p(\theta|\alpha) p(z|\theta) p(y|\phi, z)
+$$
+
+* Conditional posteriors, (conjugacy, independency, and assume uniform Dirichlet prior $\alpha$ and $\beta$)
+$$
+p(\theta_m \in [0,1]^K| z, \alpha) = Dir(c_{k,m} + \alpha)
+$$
+$$
+p(\phi_k \in [0,1]^J| z, \beta) = Dir(c_{k,j} + \beta)
+$$
+$$
+p(z_{m,n} = \mathbb{k} | \phi_k, \theta_m, y_{m,n}) \propto p(y_{m,n} | \mathbb{k}, \phi_k) p(\mathbb{k} | \theta_m) = \phi_{\mathbb{k},y_{m,n}} \times \theta_{m, \mathbb{k}}
+$$
+
+* A gibbs sampler can built based on these equations.
+
+* For many reasons, people usually infer such kind of posteriors using *collapsed gibbs sampling*.
+
+* Note that the vector $z_{m,n}$ is a sufficient statistics for $\phi_k$ and $\theta_m$.
+
+# Collapsed Gibbs Sampling
+
+<img alt="Plate model for LDA", style="float: right" src="lda.png" />
+
+* Sample each dimension of the big vector $z_{m,n}$ one by one.
+* $z_{-(m,n)}$ denotes topic assignment for all words except $z_{m,n}$. Note $z = z_{m,n} \cup z_{-(m,n)}$
+$$
+z_{m,n} \sim p(z_{m,n} | z_{-(m,n)}, y, \alpha, \beta) \propto p(z_{m,n}, z_{-(m,n)}, y|\alpha, \beta) = p(z,y| \alpha, \beta)
+$$
+* Note that $\phi_k$ and $\theta_m$ is missing in the above posterior, because they are integrated out from the joint posterior as following, (**collapsed**)
+$$
+p(z,y|\alpha, \beta) = \int \int p(y, z, \theta, \phi | \alpha, \beta) d\theta d\phi
+$$
+* By sophisticated derivations and keep only the terms relevant to $z_{m,n}$, we can simplify the integration as follows. The counts superscripted with $-(m,n)$ means the counts excluding $z_{m,n}$,
+
+$$
+p(z_{m,n} = \mathbb{k}| z_{-(m,n)}, y, \alpha, \beta) \propto \frac{(c_{\mathbb{k}, m}^{-(m,n)} + \alpha) \times (c_{\mathbb{k}, y_{m,n}}^{-(m,n)} + \beta)}{c_{\mathbb{k}}^{-(m,n)} + J * \beta}
+$$
+
+* Intuitively, estimate $\phi_k$ and $\theta_m$ using $z_{-(m,n)}$, then draw $z_{m,n}$ from $\phi_{k,y_{m,n}} \times \theta_{m, k}$
+
+# Algorithm
+$$
+p(z_{m,n} = \mathbb{k}| z_{-(m,n)}, y, \alpha, \beta) \propto \frac{(c_{\mathbb{k}, m}^{-(m,n)} + \alpha) \times (c_{\mathbb{k}, y_{m,n}}^{-(m,n)} + \beta)}{c_{\mathbb{k}}^{-(m,n)} + J * \beta}
+$$
+
+<img alt="Plate model for LDA", style="float: right" src="lda.png" />
+
+1. Input: $y_{m,n}$
+1. Random init $z_{m,n}$
+1. Init the counts $c_{k,m}, c_{k,j}, c_{k}$ from $z_{m,n}$
+1. for i = 1:niter
+    * for each (m, n) do,
+    1. $j \leftarrow y_{m,n}$
+    1. $\mathbb{k} \leftarrow z_{m,n}$
+    1. decrement counts $c_{\mathbb{k},m}$ -= 1, $c_{\mathbb{k},j}$ -= 1, $c_{\mathbb{k}}$ -= 1, (which are just $c_{k,m}^{-(m,n)}, c_{k,j}^{-(m,n)}, c_k^{-(m,n)}$)
+    1. compute $p(z_{m,n}|...)$ using the above equation
+    1. draw $z_{m,n} \rightarrow \mathbb{k}$
+    1. increment counts $c_{\mathbb{k},m}$ += 1, $c_{\mathbb{k},j}$ += 1, $c_{\mathbb{k}}$ += 1.
+1. Output: $z_{m,n}, c_{k,m}, c_{k,j}$ and $c_{k}$
+
+# Implemetations
+
+* Computation complexity is $O(\text{niter}*MN*K)$.
+* In one typical experiment, *niter* = 20000, *MN* = 342,000 and *K* = 50. Roughly 34 Billion floating point operations.
+* Core sampling implemented with C++ (20 times faster than pure R implemetation)
+* 2 hours in average for one run.
+* Simulations and paremeters tuning carried on clusters (72 nodes) in 24 hours.
+
+
+# Simulations
 
 # Datasets
 ``` {r ap-data-trace}
@@ -18,7 +234,6 @@ dataset <- load.ap.data()
 A <- gibbs.vis.stat(dataset)
 ```
 
-
 # Examples
 
 # Perplexity
@@ -26,3 +241,5 @@ A <- gibbs.vis.stat(dataset)
 # Traceplots
 
 # Instance Agreement Bias
+
+# Experiments

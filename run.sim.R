@@ -1,4 +1,3 @@
-library(doParallel)
 source('load.data.R')
 source('gibbs.parallel.R')
 

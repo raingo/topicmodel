@@ -15,6 +15,7 @@ load.ap.data <- function()
   dataset$triple.let <- doc.pairs
   dataset$vocab <- vocab
   dataset$digest <- digest(save.name)
+  #dataset$digest <- 'test'
 
   return(dataset)
 }

@@ -1,16 +1,21 @@
-library(doParallel)
+#library(doParallel)
+library(doSNOW)
 source('gibbs.R')
 source('load.data.R')
 
 sampling.params.grid <- function()
 {
     n.rep <- 5
-    K.set <- c(10, 20, 30, 40, 50)
-    ratio.set <- c(.2, .3, .5, .8)
-    params.grid <- expand.grid(ratio.set, K.set, 1:n.rep)
-    colnames(params.grid) <- c('ratio', 'K', 'rep')
+    #K.set <- c(10, 20, 30, 40, 50)
+    K.set <- seq(from = 100, to = 10, by = -10)
+    ratio.set <- seq(from = .9, to = .1, by = -.1)
+    #ratio.set <- c(.2, .3, .5, .8)
+    params.grid <- expand.grid(ratio.set, K.set, n.rep:1)
+    #params.grid <- expand.grid(ratio.set, K.set)
+    colnames(params.grid) <- c('ratio', 'K', 'repi')
     return(params.grid)
 }
+
 gibbs.parallel <- function(dataset, n.save = 1000)
 {
     cat(dataset$digest, '\n')
@@ -20,20 +25,32 @@ gibbs.parallel <- function(dataset, n.save = 1000)
 
     writeLines(c(""), log.fn)
 
-    cl <- makePSOCKcluster(n.core)
-    registerDoParallel(cl)
+    getnodes <- function() {
+        f <- Sys.getenv('PBS_NODEFILE')
+        x <- if (nzchar(f)) readLines(f) else rep('localhost', 3)
+        #x <- hosts
+        #as.data.frame(table(x), stringsAsFactors=FALSE)
+        return(x)
+    }
+    nodes <- getnodes()
+    cl <- makeSOCKcluster(nodes)
+    registerDoSNOW(cl)
+
+    cwd <- getwd()
+    cat(cwd, '\n')
 
     perp.res.all <- foreach(
                             ratio = params.grid[, 'ratio'],
                             K = params.grid[, 'K'],
-                            repi = params.grid[, 'rep'],
-                            .packages = c('abind', 'gibbsLda')) %dopar% {
+                            repi = params.grid[, 'repi'],
+                            .packages = c('abind', 'gibbsLda')
+                            ) %dopar% {
+        setwd(cwd)
+
         source('load.data.R')
         source('gibbs.R')
 
-        sink(log.fn, append=TRUE)
-
-        cat(ratio, K, repi, paste(Sys.time()), '--begin--\n')
+        cat(ratio, K, repi, paste(Sys.time()), '--begin--\n', file = log.fn, append = T)
         train.dev <- data.split(dataset, ratio)
 
         tryCatch(
@@ -42,7 +59,7 @@ gibbs.parallel <- function(dataset, n.save = 1000)
                      cat('error: ', e, '\n')
                      res <<- paste('error', e)
                  },
-                 finally = cat(ratio, K, repi, paste(Sys.time()), '--end--\n')
+                 finally = cat(ratio, K, repi, paste(Sys.time()), '--end--\n', file = log.fn, append = T)
                  )
         res
     }

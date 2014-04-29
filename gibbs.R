@@ -22,11 +22,11 @@ gibbs.lda <- function(train.dev, n.topics, n.save = 100, repi = 0, data.name = '
     save.fn <- gibbs.lda.save.fn(n.topics, n.save, repi, train.dev$train.ratio, data.name)
     if(file.exists(save.fn) && T)
     {
-        cat('loading existing data')
+        cat('loading existing data', '\n')
         load(save.fn)
     }
     else{
-        seed0 <- 12345
+        seed0 <- as.integer(Sys.time())
         set.seed(seed0)
 
         Z <- as.integer(sample.int(n.topics, size = nrow(train.dev$train), replace = T)) - 1L

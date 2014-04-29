@@ -8,3 +8,8 @@ data
 log
 *.out
 local_settings.R
+cache
+figure
+report.*
+!report.Rmd
+refer.*

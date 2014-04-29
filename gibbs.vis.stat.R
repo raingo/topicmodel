@@ -1,15 +1,216 @@
 
 source('gibbs.parallel.R')
+source('gibbs.R')
 
-gibbs.vis.stat <- function(dataset)
+gibbs.vis.stat <- function(dataset, n.save = 1000)
 {
   params.grid <- sampling.params.grid()
+
+  multi.run <- c()
   for(i in 1:nrow(params.grid))
   {
-    ratio <- params.grid[i, 'ratio'],
-    K <- params.grid[i, 'K'],
-    repi <- params.grid[i, 'rep']
-    
-    
+    params <- as.list(params.grid[i, ])
+    ratio <- params$ratio
+    K <- params$K
+    repi <- params$rep
+
+    lda.save.fn <- gibbs.lda.save.fn(K, n.save, repi, ratio, dataset$digest)
+    single.run <- plot.single.run(lda.save.fn, params)
+
+    multi.run <- rbind(multi.run, single.run)
   }
+
+  multi.summary <- summary.multiple.run(multi.run)
+  return(multi.summary)
 }
+
+library(ggplot2)
+library(reshape2)
+summary.multiple.run <- function(multi.run)
+{
+  plot.table <- function(table, title)
+  {
+    plot.obj <- ggplot(melt(table), aes(x = ratio, y = value, group = K, color = K)) +
+      geom_line() +
+      geom_point(size = 5) +
+      ggtitle(title)
+    print(plot.obj)
+  }
+  perp.summary <- tapply(multi.run[, 'perplexity'], multi.run[, c('K', 'ratio')], FUN = mean)
+  plot.table(perp.summary, 'Perplexity')
+
+  multi.summary <- list()
+  multi.summary$perplexity <- perp.summary
+
+  if ('bias' %in% colnames(multi.run))
+  {
+    bias.summary <- tapply(multi.run[, 'bias'], multi.run[, c('K', 'ratio')], FUN = mean)
+    plot.table(bias.summary, 'Instance aggreement correlation')
+    multi.summary$bias <- bias.summary
+  }
+
+  return(multi.summary)
+}
+
+plot.single.run <- function(res.fn, params)
+{
+  load(res.fn)
+  vocab <- train.dev$vocab
+
+  thin <- 20
+
+  single.run <- params
+
+  single.run$thin <- thin
+
+  cat(res.fn, '\n')
+
+  ## plot perplexity ~ iterations
+  perp.res <- as.vector(perp.res)
+  plot(thin * (1:length(perp.res)),
+       perp.res,
+       type = 'l',
+       xlab = 'Iters', ylab = 'Perplexity', main = 'Perplexity over iterations')
+
+  single.run$perplexity <- perp.res[length(perp.res)]
+
+  ## plot bias
+  if (exists('bias.res') && length(bias.res) != 0)
+  {
+    bias.res <- as.vector(bias.res)
+    plot(thin * (1:length(bias.res)),
+         bias.res,
+         type = 'l',
+         xlab = 'Iters', ylab = 'Correlation', main = 'Sample aggrement correlation')
+    single.run$bias <- bias.res[length(bias.res)]
+  }
+
+
+  ## plot trace
+  alpha <- .01
+  beta <- .05
+
+  top.k.topic <- 2
+
+  subsetting.trace <- function(big.trace)
+  {
+    # keep two topics for each document
+    trace.sum <- apply(big.trace, c(1, 2), sum)
+    trace.topic <- apply(
+      trace.sum,
+      2,
+      function(x)
+        sort(x, decreasing = T, index.return = T)$ix
+    )
+    trace.topic <- trace.topic[1:top.k.topic, ]
+
+    trace.subset <- abind(
+      lapply(
+        1:ncol(trace.topic),
+        function(i)
+          big.trace[trace.topic[, i], i, ,drop = F]
+      ),
+      along = 2
+    )
+
+    res <- list('trace.subset' = trace.subset, 'trace.topic' = trace.topic - 1L)
+  }
+
+  trace.mean <- function(big.trace)
+  {
+    res <- apply(big.trace, c(1, 2), FUN = mean)
+    dim(res) <- dim(big.trace)[1:2]
+    return(res)
+  }
+
+  library('gibbsLda')
+  gen.theta.kd.trace <- function()
+  {
+    Ndw <- table_1d_fast(train.dev$train[, 'doc'], train.dev$n.docs)
+
+    doc.id <- train.dev$doc.trace.list
+    doc.len <- Ndw[doc.id]
+
+    theta.dk.trace <- apply(doc.trace + alpha, c(2, 3), '/', doc.len + n.topics * alpha)
+    theta.kd.trace <- aperm(theta.dk.trace, c(2, 1, 3))
+
+    theta.kd.mean <- trace.mean(theta.kd.trace)
+    res <- subsetting.trace(theta.kd.trace)
+
+    res$doc.id <- train.dev$doc.trace.list
+    res$trace.mean <- theta.kd.mean
+
+    return(res)
+  }
+
+  gen.phi.kw.trace <- function()
+  {
+    phi.trace <- apply(word.trace + beta, 1, '/', nk.trace + train.dev$n.words * beta)
+
+    dim(phi.trace) <- c(n.topics, dim(word.trace)[3], train.dev$word.trace.n)
+    phi.kw.trace <- aperm(phi.trace, c(1, 3, 2))
+
+    phi.kw.mean <- trace.mean(phi.kw.trace)
+
+    res <- subsetting.trace(phi.kw.trace)
+    res$word.id <- train.dev$word.trace.list
+    res$trace.mean <- phi.kw.mean
+
+    return(res)
+  }
+
+  library(coda)
+  trace.to.mcmc <- function(trace)
+  {
+    if (is.null(trace$word.id))
+    {
+      name <- 'doc'
+      name.list <- trace$doc.id
+    }
+    else
+    {
+      name <- 'word'
+      name.list <- trace$word.id
+
+      if (!is.null(vocab))
+        name.list <- vocab[name.list + 1]
+    }
+
+    topic.list <- trace$trace.topic
+    trace.samples <- trace$trace.subset
+
+    trace.dim <- dim(trace.samples)
+    dim(trace.samples) <- c(trace.dim[1] * trace.dim[2], trace.dim[3])
+
+    rownames(trace.samples) <- paste(name, rep(name.list, each = nrow(topic.list)),
+                                     'topic', as.vector(topic.list), sep = "-")
+
+    return(as.mcmc(t(trace.samples)))
+  }
+
+  trace.mcmc.plot <- function(samples.mcmc)
+  {
+    oldpar <- par(mfrow = c(top.k.topic, 2))
+    plot(samples.mcmc, smooth = T, auto.layout = F, ask = F)
+    par(oldpar)
+  }
+
+  plot.trace <- function(trace.gen.func)
+  {
+    trace <- trace.gen.func()
+    trace.mcmc <- trace.to.mcmc(trace)
+    trace.mcmc.plot(trace.mcmc)
+    return(trace$trace.mean)
+  }
+
+  single.run$mean.theta.kd <- plot.trace(gen.theta.kd.trace)
+  single.run$mean.phi.kw <- plot.trace(gen.phi.kw.trace)
+
+  return(single.run)
+}
+
+
+#res.fn <- 'data-cluster/bst512-ap/bst512/perp.res-50-1000-5-0.2.rdb'
+#res.fn <- 'data-cluster/bst512-sim/bst512-sim/perp.res-general-10-1000-1-0.2.rdb'
+
+#plot.single.run(res.fn, list())

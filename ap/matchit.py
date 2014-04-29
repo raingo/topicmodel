@@ -41,7 +41,7 @@ def scan_corpus():
             corpus.append((stems, line.strip))
             total += len(stems)
 
-    print total
+    #print total
     return corpus
 
 def gen_ex_docs():
@@ -55,14 +55,14 @@ def gen_ex_docs():
             docs = docs.strip().split()
             words = set(words.strip().split())
 
-            print tid
+            print '* Topic #', tid
 
             for doc in docs:
                 stems, line = corpus[int(doc) - 1]
                 stems.insert(0, ' ')
                 stems.append(' ')
 
-                output = "* "
+                output = "    * "
                 for idx, stem in enumerate(stems):
                     if stem in words:
                         output += ' ... '
@@ -78,8 +78,8 @@ def gen_ex_docs():
                 print output
 
 def main():
-    scan_corpus()
-    #gen_ex_docs()
+    #scan_corpus()
+    gen_ex_docs()
 
     pass
 

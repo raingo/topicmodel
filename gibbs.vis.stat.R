@@ -2,11 +2,22 @@
 source('gibbs.parallel.R')
 source('gibbs.R')
 
-gibbs.vis.stat <- function(dataset, n.save = 1000)
+gibbs.vis.stat <- function(dataset, 
+                           n.save = 1000, 
+                           do.plot = F, 
+                           param.id = NULL,
+                           do.save = T,
+                           do.example = F,
+                           do.trace = F)
 {
   params.grid <- sampling.params.grid()
   
-  do.plot <- F
+  if (!is.null(param.id))
+  {
+    params.grid <- params.grid[param.id, ]
+  }
+  
+  set.seed(as.integer(Sys.time()))
   
   multi.run.save.fn <- paste(
     base.dir, 
@@ -15,11 +26,16 @@ gibbs.vis.stat <- function(dataset, n.save = 1000)
     '.rdb', 
     sep = '')
   
-  if (do.plot || !file.exists(multi.run.save.fn) || T)
+  if (do.save && file.exists(multi.run.save.fn))
+  {
+    cat('loading', multi.run.save.fn, '\n')
+    load(multi.run.save.fn)
+  }
+  else
   {
     multi.run <- c()
-    #for(i in 1:nrow(params.grid))
-    for (i in c(100))
+    
+    for(i in 1:nrow(params.grid))
     {
       params <- as.list(params.grid[i, ])
       ratio <- params$ratio
@@ -27,18 +43,25 @@ gibbs.vis.stat <- function(dataset, n.save = 1000)
       repi <- params$rep
       
       lda.save.fn <- gibbs.lda.save.fn(K, n.save, repi, ratio, dataset$digest)
-      single.run <- plot.single.run(lda.save.fn, params, do.plot)
+      single.run <- plot.single.run(lda.save.fn, 
+                                    params, 
+                                    do.plot, 
+                                    do.example,
+                                    do.trace)
       
       multi.run <- rbind(multi.run, 
                          as.data.frame(single.run, row.names = i))
-      stop('enough')
     }
     
-    save(multi.run, file = multi.run.save.fn)
-  } else
-    load(multi.run.save.fn)
+    if (do.save)
+      save(multi.run, file = multi.run.save.fn)
+  }
   
-  multi.summary <- summary.multiple.run(multi.run)
+  if (is.null(param.id))
+    multi.summary <- summary.multiple.run(multi.run)
+  else
+    multi.summary <- NULL
+  
   return(multi.summary)
 }
 
@@ -48,7 +71,13 @@ summary.multiple.run <- function(multi.run)
 {
   plot.table <- function(table, title)
   {
-    plot.obj <- ggplot(melt(table), aes(x = ratio, y = value, group = K, color = K)) +
+    plot.obj <- ggplot(melt(table), 
+                       aes(
+                         x = ratio, 
+                         y = value, 
+                         group = K, 
+                         color = K)
+    ) +
       geom_line() +
       geom_point(size = 5) +
       ggtitle(title)
@@ -66,14 +95,19 @@ summary.multiple.run <- function(multi.run)
   if ('bias' %in% colnames(multi.run))
   {
     bias.summary <- tapply(multi.run[, 'bias'], multi.run[, c('K', 'ratio')], FUN = mean)
-    plot.table(bias.summary, 'Instance aggreement correlation')
+    plot.table(bias.summary, 'Affinity correlation')
     multi.summary$bias <- bias.summary
   }
   
   return(multi.summary)
 }
 
-plot.single.run <- function(res.fn, params, do.plot = T)
+plot.single.run <- function(
+  res.fn, 
+  params, 
+  do.plot = T, 
+  do.example = F,
+  do.trace = F)
 {
   load(res.fn)
   vocab <- train.dev$vocab
@@ -94,7 +128,10 @@ plot.single.run <- function(res.fn, params, do.plot = T)
     plot(thin * (1:length(perp.res)),
          perp.res,
          type = 'l',
-         xlab = 'Iters', ylab = 'Perplexity', main = 'Perplexity over iterations')
+         xlab = 'Iters', 
+         ylab = 'Perplexity', 
+         main = 'Perplexity over iterations'
+    )
   
   single.run$perplexity <- perp.res[length(perp.res)]
   
@@ -107,7 +144,9 @@ plot.single.run <- function(res.fn, params, do.plot = T)
       plot(thin * (1:length(bias.res)),
            bias.res,
            type = 'l',
-           xlab = 'Iters', ylab = 'Correlation', main = 'Sample aggrement correlation')
+           xlab = 'Iters', 
+           ylab = 'Correlation',
+           main = 'Sample aggrement correlation')
     single.run$bias <- bias.res[length(bias.res)]
   }
   
@@ -224,11 +263,8 @@ plot.single.run <- function(res.fn, params, do.plot = T)
   plot.trace <- function(trace.gen.func)
   {
     trace <- trace.gen.func()
-    if (do.plot)
-    {
-      trace.mcmc <- trace.to.mcmc(trace)
-      trace.mcmc.plot(trace.mcmc)
-    }
+    trace.mcmc <- trace.to.mcmc(trace)
+    trace.mcmc.plot(trace.mcmc)
     return(trace$trace.mean)
   }
   
@@ -257,6 +293,8 @@ plot.single.run <- function(res.fn, params, do.plot = T)
     
     write.table(t(phi.wk.top.w), file = 'ap/top.w', 
                 quote = F, row.names = F, col.names = F)
+    
+    cat('\n\nTop words for top topics\n')
     print(phi.wk.top.w)
     
     n.top.docs <- 10
@@ -266,16 +304,21 @@ plot.single.run <- function(res.fn, params, do.plot = T)
       function(x)
         sort(x, decreasing = T, index.return = T)$ix)[1:n.top.docs, top.topic]
     
+    cat('\n\nTop documents for topics\n')
     print(theta.dk.top.doc)
     write.table(t(theta.dk.top.doc), file = 'ap/top.doc', 
                 quote = F, row.names = F, col.names = F)
   }
   
-  if (!is.null(vocab))
+  if (!is.null(vocab) && do.example)
     fetch.examples()
   
-  #mean.theta.kd <<- plot.trace(gen.theta.kd.trace)
-  #mean.phi.kw <<- plot.trace(gen.phi.kw.trace)
+  if (do.trace)
+  {
+    mean.theta.kd <<- plot.trace(gen.theta.kd.trace)
+    mean.phi.kw <<- plot.trace(gen.phi.kw.trace)
+  }
+  
   
   return(single.run)
 }

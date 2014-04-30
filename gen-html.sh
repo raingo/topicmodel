@@ -15,10 +15,10 @@ name="${filename%.*}"
 
 # R CMD BATCH report.gen.R
 Rscript -e "library('knitr')" -e "knit('$name.Rmd')"
-# pandoc -s -S -i -t slidy -c style.css -V duration:45 --mathjax $name.md -o $name.html
+#pandoc -s -S -i -t slidy -c style.css -V duration:45 --mathjax $name.md -o $name.html
 #pandoc -s -S -t slidy -c style.css -V duration:45 --mathjax $name.md -o $name.html
 pandoc -S -t slidy -c style.css -V duration:45 --mathjax $name.md -o $name.html
-# pandoc -S -t revealjs -c style.css -V duration:45 --mathjax $name.md -o $name.html
+#pandoc -S -t revealjs -c style.css -V duration:45 --mathjax $name.md -o $name.html
 
 if [ -z "`pgrep view-html.sh`" ]
 then

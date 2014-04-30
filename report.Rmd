@@ -520,9 +520,8 @@ A <- gibbs.vis.stat(dataset.sim.5, n.save = 100, do.save = T)
 
 * Apply Metropolis Hasting with good proposal variance to make larger jumps
 * Diagnostics for this kind of *Big Model*
-* More richer models
+* Richer models
 
-<!--
 # Packages and References
 
 * [Rcpp](http://www.rcpp.org/) for C++ integration
@@ -532,11 +531,12 @@ A <- gibbs.vis.stat(dataset.sim.5, n.save = 100, do.save = T)
 * Wikipedia
 * [Original LDA-C code from the author](http://www.cs.princeton.edu/~blei/lda-c/),
 
+All source code for this project are posted online. [https://github.com/raingo/topicmodel](https://github.com/raingo/topicmodel)
+
 # Thanks
 
-* Prof. Thurston for so many help to get through the courses.
--->
+* Sally for the wonderful classes and feedbacks.
 
-<p class='caption', style="float: right">
+<p class="caption", style="float:right">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
 </p>

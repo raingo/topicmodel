@@ -4,7 +4,7 @@ source('local_settings.R')
 
 load.ap.data <- function()
 {
-  save.name <- 'ap-pairs.dat'
+  save.name <- 'ap/ap-pairs.dat'
   doc.pairs <- as.matrix(read.table(save.name))
   colnames(doc.pairs) <- c('doc', 'word', 'cnt')
   storage.mode(doc.pairs) <- 'integer'

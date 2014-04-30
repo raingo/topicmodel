@@ -9,3 +9,4 @@ cd tmp/
 mkdir -p /u/yli/www/bst512
 tar xfa $tarfile -C /u/yli/www/bst512
 EOF
+rm $tarfile

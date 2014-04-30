@@ -9,7 +9,7 @@ load.ap.data <- function()
   colnames(doc.pairs) <- c('doc', 'word', 'cnt')
   storage.mode(doc.pairs) <- 'integer'
 
-  vocab <- as.matrix(read.table('vocab.txt'))
+  vocab <- as.matrix(read.table('ap/vocab.txt'))
 
   dataset <- list()
   dataset$triple.let <- doc.pairs
